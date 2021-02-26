@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static cn.kevenpotter.im.second.Command.LOGIN_REQUEST;
+import static cn.kevenpotter.im.second.Command.LOGIN_RESPONSE;
 
 public class PacketCodeC {
 
@@ -14,19 +15,23 @@ public class PacketCodeC {
     private static final Map<Byte, Class<? extends Packet>> packetTypeMap;
     private static final Map<Byte, Serializer> serializerMap;
 
+    public static final PacketCodeC INSTANCE = new PacketCodeC();
+
     static {
         packetTypeMap = new HashMap<>();
         packetTypeMap.put(LOGIN_REQUEST, LoginRequestPacket.class);
+        packetTypeMap.put(LOGIN_RESPONSE, LoginResponsePacket.class);
         serializerMap = new HashMap<>();
         Serializer serializer = new JSONSerializer();
         serializerMap.put(serializer.getSerializerAlgorithm(), serializer);
     }
 
-    public ByteBuf encode(Packet packet) {
-        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.ioBuffer();  // 1.创建ByteBuf对象
+    public ByteBuf encode(ByteBufAllocator byteBufAllocator, Packet packet) {
+        ByteBuf byteBuf = byteBufAllocator.ioBuffer();          // 1.创建ByteBuf对象
         byte[] bytes = Serializer.DEFAULT.serialize(packet);    // 2.序列化java对象
         byteBuf.writeInt(MAGIC_NUMBER);
         byteBuf.writeByte(packet.getVersion());
+        byteBuf.writeByte(Serializer.DEFAULT.getSerializerAlgorithm());
         byteBuf.writeByte(packet.getCommand());
         byteBuf.writeInt(bytes.length);
         byteBuf.writeBytes(bytes);
